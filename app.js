@@ -1,5 +1,6 @@
 let currentImage = null;
 let originalImageData = null;
+let worker = null;
 
 // Обработчики загрузки файлов
 document.getElementById('cameraInput').addEventListener('change', handleFileSelect);
@@ -212,11 +213,19 @@ async function processImage(file) {
         progressText.textContent = 'Предобработка изображения...';
         
         // Ждем загрузки оригинального изображения
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        if (!originalImageData) {
-            throw new Error('Изображение не загружено');
-        }
+        await new Promise((resolve, reject) => {
+            if (originalImageData && originalImageData.complete) resolve();
+            else {
+                const timeout = setTimeout(() => reject(new Error('Таймаут загрузки изображения')), 5000);
+                const check = setInterval(() => {
+                    if (originalImageData && originalImageData.complete) {
+                        clearInterval(check);
+                        clearTimeout(timeout);
+                        resolve();
+                    }
+                }, 100);
+            }
+        });
         
         // Предобработка
         const processedCanvas = preprocessImage(originalImageData);
@@ -230,15 +239,25 @@ async function processImage(file) {
         
         progressText.textContent = 'Инициализация OCR...';
         
-        // Создаем воркер Tesseract с оптимальными параметрами
-        const worker = await Tesseract.createWorker('rus', 1, {
+        // Проверяем наличие Tesseract
+        if (typeof Tesseract === 'undefined') {
+            throw new Error('Библиотека Tesseract не загружена. Проверьте интернет-соединение.');
+        }
+
+        // Создаем воркер Tesseract
+        worker = await Tesseract.createWorker({
             logger: (m) => {
                 if (m.status === 'recognizing text') {
                     const progress = Math.round(m.progress * 100);
                     progressText.textContent = `Распознавание: ${progress}%`;
+                } else {
+                    progressText.textContent = m.status;
                 }
             }
         });
+        
+        await worker.loadLanguage('rus');
+        await worker.initialize('rus');
         
         // Настройки для лучшего распознавания чеков
         await worker.setParameters({
@@ -248,7 +267,6 @@ async function processImage(file) {
         
         // Распознаем текст
         const { data: { text } } = await worker.recognize(processedCanvas);
-        await worker.terminate();
         
         // Отображаем результат
         extractedTextArea.value = text;
@@ -259,8 +277,13 @@ async function processImage(file) {
     } catch (error) {
         console.error('Ошибка при обработке:', error);
         processingIndicator.style.display = 'none';
-        errorMessage.textContent = 'Ошибка при обработке изображения: ' + error.message;
+        errorMessage.textContent = 'Ошибка: ' + (error.message || 'Неизвестная ошибка');
         errorMessage.style.display = 'block';
+    } finally {
+        if (worker) {
+            await worker.terminate();
+            worker = null;
+        }
     }
 }
 
