@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сканер чеков</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="icon">📄</div>
+                <h1>Сканер чеков</h1>
+                <p>Сфотографируйте чек или загрузите фото для извлечения текста</p>
+            </div>
+
+            <div id="uploadSection" class="upload-section">
+                <div class="upload-buttons">
+                    <button class="upload-btn" onclick="document.getElementById('cameraInput').click()">
+                        <span class="btn-icon">📷</span>
+                        <span class="btn-text">Сфотографировать</span>
+                        <span class="btn-subtitle">Использовать камеру</span>
+                    </button>
+
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        <span class="btn-icon">📁</span>
+                        <span class="btn-text">Загрузить фото</span>
+                        <span class="btn-subtitle">Выбрать из галереи</span>
+                    </button>
+                </div>
+            </div>
+
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;">
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+
+            <div id="resultSection" class="result-section" style="display: none;">
+                <!-- Настройки предобработки -->
+                <div class="settings-panel">
+                    <h3>⚙️ Настройки обработки</h3>
+                    <div class="settings-grid">
+                        <label class="setting-item">
+                            <input type="checkbox" id="autoRotate" checked>
+                            <span>Автоповорот</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="enhanceContrast" checked>
+                            <span>Усилить контраст</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="denoise" checked>
+                            <span>Убрать шум</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="sharpen" checked>
+                            <span>Увеличить резкость</span>
+                        </label>
+                        <label class="setting-item">
+                            <input type="checkbox" id="binarize">
+                            <span>Черно-белый режим</span>
+                        </label>
+                    </div>
+                    <button class="reprocess-btn" onclick="reprocessImage()">🔄 Обработать заново</button>
+                </div>
+
+                <div class="result-grid">
+                    <div class="image-container">
+                        <div class="section-header">
+                            <h3>Исходное изображение</h3>
+                            <button class="reset-btn" onclick="resetApp()">✕</button>
+                        </div>
+                        <img id="previewImage" alt="Чек">
+                        
+                        <div class="processed-preview">
+                            <h4>Обработанное изображение:</h4>
+                            <canvas id="processedCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="text-container">
+                        <div class="section-header">
+                            <h3>Распознанный текст</h3>
+                            <button id="downloadBtn" class="download-btn" onclick="downloadText()" style="display: none;">
+                                💾 Скачать
+                            </button>
+                        </div>
+
+                        <div id="processingIndicator" class="processing" style="display: none;">
+                            <div class="spinner"></div>
+                            <p>Обработка изображения...</p>
+                            <p id="progressText" class="progress-text"></p>
+                        </div>
+
+                        <div id="errorMessage" class="error" style="display: none;"></div>
+
+                        <textarea id="extractedText" 
+                                  placeholder="Распознанный текст появится здесь..."
+                                  style="display: none;"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tip">
+                <strong>💡 Совет:</strong> Для лучшего результата убедитесь, что чек хорошо освещен, текст четкий и читаемый. Используйте настройки обработки для улучшения качества распознавания.
+            </div>
+        </div>
+    </div>
+
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
+    <script src="app.js"></script>
+</body>
+</html>
