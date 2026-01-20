@@ -131,12 +131,17 @@ function reprocessImage() {
 
 function downloadText() {
     const text = document.getElementById('extractedText').value;
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    // Добавляем BOM (Byte Order Mark) для корректного отображения кириллицы в Windows/Mobile
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const blob = new Blob([bom, text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `чек_${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function resetApp() {
